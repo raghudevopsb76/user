@@ -1,0 +1,38 @@
+name: 'ReleaseWithTag'
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  PR:
+    name: 'ReleaseWithTag'
+    runs-on:
+      labels: self-hosted
+#    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install NodeJS Dependencies
+      run: npm install
+
+    - name: Build
+      run: |
+        echo $GITHUB_REF_NAME > VERSION
+        zip -r user-$GITHUB_REF_NAME.zip *
+
+    - name: Release App
+      run: |
+        curl -sSf -u "admin:$ARTIFACTORY_PASSWORD" -X PUT  -T user-$GITHUB_REF_NAME.zip http://artifactory.rdevopsb72.online:8081/artifactory/user/user-$GITHUB_REF_NAME.zip
+      env:
+        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
